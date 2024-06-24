@@ -1,0 +1,40 @@
+name: CI maven build GraalVM 21.0.2
+
+on:
+  # Trigger analysis when pushing in master or pull requests, and when creating
+  # a pull request.
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@main
+        with:
+          # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
+
+      - uses: graalvm/setup-graalvm@main
+        with:
+          java-version: '21.0.2'
+          distribution: 'graalvm'
+          native-image-job-reports: 'true'
+
+      - name: Cache Maven packages
+        uses: actions/cache@main
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build
+        run: mvn package -Dpackaging=native-image
